@@ -1,13 +1,16 @@
 # CS360 Project
 
-### commands
+#### commands:
 Includes the commands we've had to implement.
 
-### util
+#### util:
 Includes some all of K.C's util function as well as some that we've had to Implement.
 
-### type.h
+#### type.h:
 Inlcudes K.C's predefined types, moved some global definitions to this file as well.
+
+### mk:
+Calls mkdisk and internally then compiles main.c and runs it.
 
 ```
         type.h
@@ -15,8 +18,10 @@ Inlcudes K.C's predefined types, moved some global definitions to this file as w
      /          \
     /            \
  commands.h    util.h
-    |            |
-    |            |
+    |         /  |
+    |        /   |
+    |       /    |
+    |      /     |
  commands.c    util.c
     \           /
      \         /
