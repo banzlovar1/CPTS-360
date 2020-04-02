@@ -318,4 +318,68 @@ int mycreat(MINODE *pip, char *name){
     return 0;
 }
 
-int create();
+// Does not handle rmdir of . or .. or /
+int rm_dir(char *pathname){
+    DIR *dp;
+    char buf[BLKSIZE], name[256], *cp;
+    MINODE *mip, *pmip;
+    int i, ino, pino;
+
+    ino = getino(pathname);
+    mip = iget(dev, ino);
+
+    printf("running->uid=%d ", running->uid);
+    printf("ino->i_uid=%d\n", mip->inode.i_uid);
+
+    if (running->uid != mip->inode.i_uid) return 0; // How to check if running PROC is superuser?
+    printf("running->uid == ino->i_uid\n");
+
+    if ((mip->inode.i_mode & 0xF000) == 0x4000 && mip->refCount == 1){ // if is a dir and not being used
+        printf("mip is a dir and not currently being used!\n");
+        printf("mip link_count=%d\n", mip->inode.i_links_count);
+        if (mip->inode.i_links_count <= 2){ // could still have reg files
+            int actual_links=0;
+    
+            get_block(dev, mip->inode.i_block[0], buf);
+            dp = (DIR*)buf;
+            cp = buf;
+
+            while (cp < buf + BLKSIZE){
+                actual_links++;
+
+                cp += dp->rec_len;
+                dp = (DIR*)cp;
+            }
+
+            if (actual_links <= 2){ // good to go
+                for (i=0; i<12; i++){
+                    if (mip->inode.i_block[i]==0)
+                        continue;
+                    else
+                        bdalloc(mip->dev, mip->inode.i_block[i]); // dealloc mip blocks
+                }
+                idalloc(mip->dev, mip->ino); // dealloc mip inode
+                iput(mip); // put it
+
+                u32 *inum = malloc(8);
+                pino = findino(mip, inum);
+                pmip = iget(mip->dev, pino);
+                findmyname(pmip, ino, name); // find the name of the dir to be deleted
+                printf("pino=%d ino=%d name=%s\n", pino, ino, name);
+
+                rm_name(pmip, name); // remove name from parent's dir 
+                pmip->inode.i_links_count--; // dec link count
+                pmip->inode.i_atime = pmip->inode.i_mtime = time(0L); // touch a/mtime
+                pmip->dirty = 1; // mark dirty
+                iput(pmip);
+            }
+        }
+    } else if (mip->refCount > 1)
+        printf("mip is in use, refCount=%d!\n", mip->refCount);
+    else
+        printf("mip is not a dir!\n");
+
+    // get here if above if fails, otherwise never get here
+    iput(mip);
+    return -1;
+}

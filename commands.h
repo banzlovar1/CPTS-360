@@ -17,5 +17,6 @@ int make_dir(char *pathname);
 int mymkdir(MINODE *pip, char *name);
 int creat_file(char *pathname);
 int mycreat(MINODE *pip, char *name);
+int rm_dir(char *pathname);
 
 #endif

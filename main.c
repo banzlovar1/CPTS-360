@@ -1,8 +1,8 @@
 /****************************************************************************
 *                   KCW  Implement ext2 file system                         *
 *****************************************************************************/
-#include "commands.c"
 #include "util.c"
+#include "commands.c"
 
 // global variables
 MINODE minode[NMINODE];
@@ -104,7 +104,7 @@ int main(int argc, char *argv[ ])
     // WRTIE code here to create P1 as a USER process
   
     while(1){
-        printf("input command : [ls|cd|pwd|mkdir|touch|quit] ");
+        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|quit] ");
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 
@@ -123,6 +123,8 @@ int main(int argc, char *argv[ ])
             pwd(running->cwd);
         else if (strcmp(cmd, "mkdir")==0)
             make_dir(pathname);
+        else if (strcmp(cmd, "rmdir")==0)
+            rm_dir(pathname);
         else if (strcmp(cmd, "touch")==0)
             creat_file(pathname);
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)
