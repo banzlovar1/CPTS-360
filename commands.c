@@ -145,6 +145,8 @@ char *pwd(MINODE *wd){
     putchar('\n');
     putchar('\n');
 
+    printf("wd->refCount=%d\n", wd->refCount);
+
     return 0;
 }
 
@@ -328,16 +330,18 @@ int rm_dir(char *pathname){
     ino = getino(pathname);
     mip = iget(dev, ino);
 
+    //show(mip); not working for some reason?
+
     printf("running->uid=%d ", running->uid);
     printf("ino->i_uid=%d\n", mip->inode.i_uid);
 
     if (running->uid != mip->inode.i_uid) return 0; // How to check if running PROC is superuser?
     printf("running->uid == ino->i_uid\n");
 
-    if ((mip->inode.i_mode & 0xF000) == 0x4000 && mip->refCount == 1){ // if is a dir and not being used
+    if ((mip->inode.i_mode & 0xF000) == 0x4000){// && mip->refCount == 1){ // if is a dir and not being used
         printf("mip is a dir and not currently being used!\n");
         printf("mip link_count=%d\n", mip->inode.i_links_count);
-        if (mip->inode.i_links_count <= 2){ // could still have reg files
+        if (mip->inode.i_links_count >= 2){ // could still have reg files
             int actual_links=0;
     
             get_block(dev, mip->inode.i_block[0], buf);
@@ -366,12 +370,14 @@ int rm_dir(char *pathname){
                 pmip = iget(mip->dev, pino);
                 findmyname(pmip, ino, name); // find the name of the dir to be deleted
                 printf("pino=%d ino=%d name=%s\n", pino, ino, name);
-
-                rm_name(pmip, name); // remove name from parent's dir 
-                pmip->inode.i_links_count--; // dec link count
-                pmip->inode.i_atime = pmip->inode.i_mtime = time(0L); // touch a/mtime
-                pmip->dirty = 1; // mark dirty
-                iput(pmip);
+                
+                if (strcmp(name, ".") > 0 && strcmp(name, "..") > 0 && strcmp(name, "/") > 0){
+                    rm_name(pmip, name); // remove name from parent's dir 
+                    pmip->inode.i_links_count--; // dec link count
+                    pmip->inode.i_atime = pmip->inode.i_mtime = time(0L); // touch a/mtime
+                    pmip->dirty = 1; // mark dirty
+                    iput(pmip);
+                }
             }
         }
     } else if (mip->refCount > 1)

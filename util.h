@@ -19,6 +19,7 @@ void iput(MINODE *mip);
 int search(MINODE *mip, char *name);
 int getino(char *pathname);
 int findmyname(MINODE *parent, u32 myino, char *myname);
+int show(MINODE *mip);
 int findino(MINODE *mip, u32 *myino);
 int enter_name(MINODE *pip, int myino, char *myname);
 int rm_name(MINODE *pmip, char *name);

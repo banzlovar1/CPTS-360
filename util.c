@@ -211,6 +211,30 @@ int findmyname(MINODE *parent, u32 myino, char *myname){
     return 0;
 }
 
+int show(MINODE *mip){
+    DIR *dp;
+    char buf[BLKSIZE], name[256], *cp;
+    INODE *ip = &(mip->inode);
+
+    get_block(mip->dev, ip->i_block[0], buf);
+    cp = buf;
+    dp = (DIR*)cp;
+
+    printf("\ninode\trec_len\tname_len\tname\n========================================\n");
+    while (cp < buf + BLKSIZE){
+        strncpy(name, dp->name, dp->name_len);
+        name[dp->name_len]=0;
+
+        printf("%1d\t%1d\t%1d\t%s\n", dp->inode, dp->rec_len, dp->name_len, name);
+
+        cp += dp->rec_len;
+        dp = (DIR*)cp;
+    }
+    putchar('\n');
+
+    return 0;
+}
+
 int findino(MINODE *mip, u32 *myino){ // myino = ino of . return ino of ..
     char buf[BLKSIZE], *cp;   
     DIR *dp;
@@ -282,37 +306,93 @@ int enter_name(MINODE *pip, int myino, char *myname){
     put_block(pip->dev, pip->inode.i_block[block_i], buf);
     printf("write parent data block=%d to disk\n", blk);
 
-
     return 0;
 }
 
 int rm_name(MINODE *pmip, char *name){
-    char buf[BLKSIZE], *cp, temp[256];
+    char buf[BLKSIZE], *cp, *rm_cp, temp[256];
     DIR *dp;
-    int block_i, i, blk, ino;
+    int block_i, i, j, size, last_len, rm_len;
 
-    for (i=0; i<12; i++){
+    for (i=0; i<pmip->inode.i_blocks; i++){
         if (pmip->inode.i_block[i]==0) break;
         get_block(pmip->dev, pmip->inode.i_block[i], buf);
         printf("rm_name : get_block i=%d\n", i);
+        printf("NAME=%s\n", name);
         dp = (DIR*)buf;
         cp = buf;
 
         block_i = i;
 
+        i=0;
+        j=0;
         while (cp + dp->rec_len < buf + BLKSIZE){
             strncpy(temp, dp->name, dp->name_len);
             temp[dp->name_len] = 0;
 
-            printf("[%d %s] ", dp->rec_len, temp);
+            if (!strcmp(name, temp)){
+                i=j;
+                rm_cp = cp;
+                rm_len = dp->rec_len;
+                printf("rm=[%d %s] ", dp->rec_len, temp);
+            } else
+                printf("[%d %s] ", dp->rec_len, temp);
 
+
+            last_len = dp->rec_len;
             cp += dp->rec_len;
             dp = (DIR*)cp;
+            j++; // get count of entries into j 
         }
-
         strncpy(temp, dp->name, dp->name_len);
         temp[dp->name_len] = 0;
+
         printf("[%d %s]\n", dp->rec_len, temp);
+        printf("block_i=%d\n", block_i);
+
+        if (j==0){ // first entry
+            printf("First entry!\n");
+
+            printf("deallocating data block=%d\n", block_i);
+            bdalloc(pmip->dev, pmip->inode.i_block[block_i]); // dealloc this block
+
+            for (i=block_i; i<pmip->inode.i_blocks; i++){ // move other blocks up
+            }
+        } else if (i==0) { // last entry
+            cp -= last_len;
+            printf("at end : temp=%s last_len=%d\n", temp, last_len);
+            last_len = dp->rec_len;
+            printf("at end : temp=%s last_len=%d\n", temp, last_len);
+            dp = (DIR*)cp;
+            dp->rec_len += last_len;
+            printf("dp->rec_len=%d\n", dp->rec_len);
+
+            //last_len = dp->rec_len; // length of last rec_len
+            //printf("last r_len=%d taking rec_len of %s=%d ", last_r_len, temp, last_len);
+            //cp -= last_r_len;
+            //dp = (DIR*)cp;
+
+            //strncpy(temp, dp->name, dp->name_len);
+            //temp[dp->name_len] = 0;
+
+            //printf("and putting it to %s who's prev rec len was %d", temp, dp->rec_len);
+            //dp->rec_len += last_len;
+            //printf(", but now it's rec_len=%d\n", dp->rec_len);
+        } else { // middle entry
+            size = buf+BLKSIZE - (rm_cp+rm_len);
+            printf("in middle : copying n=%d bytes\n", size);
+            memmove(rm_cp, rm_cp + rm_len, size);
+            cp -= rm_len; 
+            dp = (DIR*)cp;
+
+            dp->rec_len += rm_len;
+
+            strncpy(temp, dp->name, dp->name_len);
+            temp[dp->name_len] = 0;
+            printf("at the last entry=%s with rec_len=%d\n", temp, dp->rec_len);
+        }
+
+        put_block(pmip->dev, pmip->inode.i_block[block_i], buf);
     }
 
 
