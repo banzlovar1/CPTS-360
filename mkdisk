@@ -1,7 +1,5 @@
-
-dd if=/dev/zero of=diskimage bs=1024 count=1440
-mke2fs -b 1024 diskimage 1440
-sudo mount diskimage /mnt
+sudo dd if=/dev/zero of=mydisk bs=1024 count=1440
+sudo mkfs mydisk 1440
+sudo mount mydisk /mnt
 (cd /mnt; sudo rmdir lost+found)
 sudo umount /mnt
-
