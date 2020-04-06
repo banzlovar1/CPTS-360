@@ -25,7 +25,7 @@ int put_block(int dev, int blk, char *buf){
 int tokenize(char *pathname){
     int i;
     char *s;
-    printf("tokenize %s\n", pathname);
+    printf("[tokenize]: %s\n", pathname);
 
     strcpy(gpath, pathname);   // tokens are in global gpath[ ]
     n = 0;
@@ -55,6 +55,7 @@ MINODE *iget(int dev, int ino){
     for (i=0; i<NMINODE; i++){
         mip = &minode[i];
         if (mip->dev == dev && mip->ino == ino){
+            //printf("\nmip=%s refCount++ now=%d\n", mip->ino, mip->refCount);
             mip->refCount++;
             //printf("found [%d %d] as minode[%d] in core\n", dev, ino, i);
             return mip;
@@ -93,6 +94,7 @@ void iput(MINODE *mip){
 
     if (mip==0) return;
 
+    //printf("\nmip=%d refCount-- now=%d\n", mip->ino, mip->refCount);
     mip->refCount--;
     if (mip->refCount > 0)  // minode is still in use
         return;
@@ -107,12 +109,12 @@ void iput(MINODE *mip){
         Write YOUR code here to write INODE back to disk
     ********************************************************/
 
-    printf(" iput : inode_start=%d\n", inode_start);
+    printf("[iput]: inode_start=%d\n", inode_start);
 
     block = (mip->ino - 1) / 8 + inode_start;
     offset = (mip->ino -1) % 8;
 
-    printf(" iput : block=%d, offset=%d\n", block, offset);
+    printf("[iput]: block=%d, offset=%d\n", block, offset);
 
     get_block(mip->dev, block, buf);
     ip = (INODE *)buf + offset;
@@ -126,7 +128,7 @@ int search(MINODE *mip, char *name){
     DIR *dp;
     INODE *ip;
 
-    printf("search for %s in MINODE = [%d, %d]\n", name, mip->dev, mip->ino);
+    printf("[search]: for %s in MINODE = [%d, %d]\n", name, mip->dev, mip->ino);
     ip = &(mip->inode);
 
     /*** search for name in mip's data blocks: ASSUME i_block[0] ONLY ***/
@@ -134,15 +136,15 @@ int search(MINODE *mip, char *name){
     get_block(dev, ip->i_block[0], sbuf);
     dp = (DIR *)sbuf;
     cp = sbuf;
-    printf("  ino   rlen  nlen  name\n");
+    printf("[search]:  ino   rlen  nlen  name\n");
 
     while (cp < sbuf + BLKSIZE){
         strncpy(temp, dp->name, dp->name_len);
         temp[dp->name_len] = 0;
-        printf("%4d  %4d  %4d    %s\n", 
+        printf("[search]: %4d  %4d  %4d    %s\n", 
             dp->inode, dp->rec_len, dp->name_len, temp);
         if (strcmp(temp, name)==0){
-            printf("found %s : ino = %d\n", temp, dp->inode);
+            printf("[search]: found %s : ino = %d\n", temp, dp->inode);
             return dp->inode;
         }
         cp += dp->rec_len;
@@ -157,7 +159,7 @@ int getino(char *pathname){
     //INODE *ip;
     MINODE *mip;
 
-    printf("getino: pathname=%s\n", pathname);
+    printf("[getino]: pathname=%s\n", pathname);
     if (strcmp(pathname, "/")==0)
         return 2;
 
@@ -171,14 +173,14 @@ int getino(char *pathname){
 
     tokenize(pathname);
     for (i=0; i<n; i++){
-        printf("===========================================\n");
-        printf("getino: i=%d name[%d]=%s\n", i, i, name[i]);
+        printf("[getino]: ===========================================\n");
+        printf("[getino]: i=%d name[%d]=%s\n", i, i, name[i]);
  
         ino = search(mip, name[i]);
 
         if (ino==0){
             iput(mip);
-            printf("name %s does not exist\n", name[i]);
+            printf("[getino]: name %s does not exist\n", name[i]);
             return 0;
         }
         iput(mip);                // release current mip
@@ -253,26 +255,21 @@ int enter_name(MINODE *pip, int myino, char *myname){
     DIR *dp;
     int block_i, i, ideal_len, need_len, remain, blk;
 
-    printf(" enter_name : search(pip)\n");
-    search(pip, "b");
-
-    printf(" enter_name : search(pip)2\n");
-    search(pip, "b");
-
     need_len = 4 * ((8 + (strlen(myname)) + 3) / 4);
-    printf("need len for %s is %d\n", myname, need_len);
+    printf("[enter_name]: need len for %s is %d\n", myname, need_len);
 
     for (i=0; i<12; i++){ // find empty block
         if (pip->inode.i_block[i]==0) break;
         get_block(pip->dev, pip->inode.i_block[i], buf); // get that empty block
-        printf("get_block : i=%d\n", i);
+        printf("[enter_name]: get_block : i=%d\n", i);
         block_i = i;
         dp = (DIR *)buf;
         cp = buf;
 
         blk = pip->inode.i_block[i];
 
-        printf(" stepping through parent data block[i] = %d\n", blk);
+        printf("[enter_name]: stepping through parent data block[i] = %d\n", blk);
+        printf("[enter_name]: ");
         while (cp + dp->rec_len < buf + BLKSIZE){
             strncpy(temp, dp->name, dp->name_len);
             temp[dp->name_len] = 0;
@@ -286,9 +283,9 @@ int enter_name(MINODE *pip, int myino, char *myname){
 
         ideal_len = 4 * ((8 + dp->name_len + 3) / 4);
 
-        printf("ideal_len=%d\n", ideal_len);
+        printf("[enter_name]: ideal_len=%d\n", ideal_len);
         remain = dp->rec_len - ideal_len;
-        printf("remain=%d\n", remain);
+        printf("[enter_name]: remain=%d\n", remain);
 
         if (remain >= need_len){
             dp->rec_len = ideal_len; // trim last rec_len to ideal_len
@@ -302,9 +299,9 @@ int enter_name(MINODE *pip, int myino, char *myname){
         }
     }
 
-    printf("put_block : i=%d\n", block_i);
+    printf("[enter_name]: put_block : i=%d\n", block_i);
     put_block(pip->dev, pip->inode.i_block[block_i], buf);
-    printf("write parent data block=%d to disk\n", blk);
+    printf("[enter_name]: write parent data block=%d to disk\n", blk);
 
     return 0;
 }
@@ -317,8 +314,8 @@ int rm_name(MINODE *pmip, char *name){
     for (i=0; i<pmip->inode.i_blocks; i++){
         if (pmip->inode.i_block[i]==0) break;
         get_block(pmip->dev, pmip->inode.i_block[i], buf);
-        printf("rm_name : get_block i=%d\n", i);
-        printf("NAME=%s\n", name);
+        printf("[rm_name]: get_block i=%d\n", i);
+        printf("[rm_name]: NAME=%s\n", name);
         dp = (DIR*)buf;
         cp = buf;
 
@@ -326,6 +323,7 @@ int rm_name(MINODE *pmip, char *name){
 
         i=0;
         j=0;
+        printf("[rm_name]: ");
         while (cp + dp->rec_len < buf + BLKSIZE){
             strncpy(temp, dp->name, dp->name_len);
             temp[dp->name_len] = 0;
@@ -348,7 +346,7 @@ int rm_name(MINODE *pmip, char *name){
         temp[dp->name_len] = 0;
 
         printf("[%d %s]\n", dp->rec_len, temp);
-        printf("block_i=%d\n", block_i);
+        printf("[rm_name]: block_i=%d\n", block_i);
 
         if (j==0){ // first entry
             printf("First entry!\n");
@@ -360,27 +358,15 @@ int rm_name(MINODE *pmip, char *name){
             }
         } else if (i==0) { // last entry
             cp -= last_len;
-            printf("at end : temp=%s last_len=%d\n", temp, last_len);
+            printf("[rm_name]: at end, temp=%s last_len=%d\n", temp, last_len);
             last_len = dp->rec_len;
-            printf("at end : temp=%s last_len=%d\n", temp, last_len);
+            printf("[rm_name]: at end, temp=%s last_len=%d\n", temp, last_len);
             dp = (DIR*)cp;
             dp->rec_len += last_len;
-            printf("dp->rec_len=%d\n", dp->rec_len);
-
-            //last_len = dp->rec_len; // length of last rec_len
-            //printf("last r_len=%d taking rec_len of %s=%d ", last_r_len, temp, last_len);
-            //cp -= last_r_len;
-            //dp = (DIR*)cp;
-
-            //strncpy(temp, dp->name, dp->name_len);
-            //temp[dp->name_len] = 0;
-
-            //printf("and putting it to %s who's prev rec len was %d", temp, dp->rec_len);
-            //dp->rec_len += last_len;
-            //printf(", but now it's rec_len=%d\n", dp->rec_len);
+            printf("[rm_name]: dp->rec_len=%d\n", dp->rec_len);
         } else { // middle entry
             size = buf+BLKSIZE - (rm_cp+rm_len);
-            printf("in middle : copying n=%d bytes\n", size);
+            printf("[rm_name]: in middle, copying n=%d bytes\n", size);
             memmove(rm_cp, rm_cp + rm_len, size);
             cp -= rm_len; 
             dp = (DIR*)cp;
@@ -389,7 +375,7 @@ int rm_name(MINODE *pmip, char *name){
 
             strncpy(temp, dp->name, dp->name_len);
             temp[dp->name_len] = 0;
-            printf("at the last entry=%s with rec_len=%d\n", temp, dp->rec_len);
+            printf("[rm_name]: at the last entry=%s with rec_len=%d\n", temp, dp->rec_len);
         }
 
         put_block(pmip->dev, pmip->inode.i_block[block_i], buf);
@@ -506,7 +492,7 @@ int ialloc(int dev){
             set_bit(buf, i);
             put_block(dev, imap, buf);
             dec_free_inodes(dev);
-            printf("allocated ino = %d\n", i+1); // bits 0..n, ino 1..n+1
+            printf("[ialloc]: allocated ino = %d\n", i+1); // bits 0..n, ino 1..n+1
             return i+1;
         }
     }
@@ -517,7 +503,7 @@ int idalloc(int dev, int ino){
     char buf[BLKSIZE];
 
     if (ino > ninodes){
-        printf("inumber=%d out of range.\n", ino);
+        printf("[idalloc]: inumber=%d out of range.\n", ino);
         return 0;
     }
 
@@ -526,7 +512,7 @@ int idalloc(int dev, int ino){
     put_block(dev, imap, buf);
 
     inc_free_inodes(dev);
-    printf("deallocated ino=%d\n", ino);
+    printf("[idalloc]: deallocated ino=%d\n", ino);
 
     return 0;
 }
@@ -541,7 +527,7 @@ int balloc(int dev){
         if (tst_bit(buf, i) == 0){
             set_bit(buf, i);
             put_block(dev, bmap, buf);
-            printf("allocated block = %d\n", i+1); // bits 0..n, ino 1..n+1
+            printf("[balloc]: allocated block = %d\n", i+1); // bits 0..n, ino 1..n+1
             dec_free_blocks(dev);
             return i+1;
         }
@@ -554,7 +540,7 @@ int bdalloc(int dev, int blk){
     char buf[BLKSIZE];
 
     if (blk > nblocks){
-        printf("block=%d out of range.\n", blk);
+        printf("[bdalloc]: block=%d out of range.\n", blk);
         return 0;
     }
 
@@ -563,7 +549,7 @@ int bdalloc(int dev, int blk){
     put_block(dev, bmap, buf);
 
     inc_free_blocks(dev);
-    printf("deallocated block=%d\n", blk-1);
+    printf("[bdalloc]: deallocated block=%d\n", blk-1);
 
     return 0;
 }

@@ -18,5 +18,6 @@ int mymkdir(MINODE *pip, char *name);
 int creat_file(char *pathname);
 int mycreat(MINODE *pip, char *name);
 int rm_dir(char *pathname);
+int sym_link(char *src, char *dest);
 
 #endif
