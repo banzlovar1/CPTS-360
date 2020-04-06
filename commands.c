@@ -27,6 +27,8 @@ int cd(char *pathname)
         running->cwd = mip;
     }
 
+    iput(mip);
+
     printf("\n cd to : ");
     pwd(running->cwd);
 
@@ -86,12 +88,15 @@ int ls_dir(MINODE *mip)
         //printf("[%d %s]  ", dp->inode, temp); // print [inode# name]
         MINODE *fmip = iget(dev, dp->inode);
         ls_file(fmip, temp);
+        iput(fmip);
 
         cp += dp->rec_len;
         dp = (DIR *)cp;
     }
     putchar('\n');
     putchar('\n');
+
+    iput(mip);
 
     return 0;
 }
@@ -130,6 +135,8 @@ char *rpwd(MINODE *wd){
 
     rpwd(pip);
     printf("/%s", my_name);
+
+    iput(pip);
 
     return 0;
 }
@@ -245,6 +252,8 @@ int mymkdir(MINODE *pip, char *name){
     printf("write data block %d to disk\n", bno);
     enter_name(pip, ino, name);
 
+    iput(pip);
+
     return 0;
 }
 
@@ -283,6 +292,7 @@ int creat_file(char *pathname){
             return r;
         } else {
             printf("\n That file name=%s already exists.\n\n", name);
+            iput(pmip);
         }
     }
 
@@ -317,5 +327,3 @@ int mycreat(MINODE *pip, char *name){
 
     return 0;
 }
-
-int create();
