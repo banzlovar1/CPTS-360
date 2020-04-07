@@ -18,14 +18,22 @@ MINODE *iget(int dev, int ino);
 void iput(MINODE *mip);
 int search(MINODE *mip, char *name);
 int getino(char *pathname);
-int enter_name(MINODE *pip, int myino, char *myname);
 int findmyname(MINODE *parent, u32 myino, char *myname);
+int show(MINODE *mip);
 int findino(MINODE *mip, u32 *myino);
+int enter_name(MINODE *pip, int myino, char *myname);
+int rm_name(MINODE *pmip, char *name);
 int abs_path(char *path);
 int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);
 int clr_bit(char *buf, int bit);
+int dec_free_inodes(int dev);
+int dec_free_blocks(int dev);
+int inc_free_inodes(int dev);
+int inc_free_blocks(int dev);
 int ialloc(int dev);
+int idalloc(int dev, int ino);
 int balloc(int dev);
+int bdalloc(int dev, int blk);
 
 #endif

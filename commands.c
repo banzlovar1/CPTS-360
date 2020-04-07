@@ -13,8 +13,6 @@ int cd(char *pathname)
     MINODE *mip;
     int ino;
 
-    printf("chdir %s\n", pathname);
-
     if (strlen(pathname) > 0)
         ino = getino(pathname);
     else
@@ -27,7 +25,7 @@ int cd(char *pathname)
         running->cwd = mip;
     }
 
-    printf("\n cd to : ");
+    printf("\n[cd]: cwd = ");
     pwd(running->cwd);
 
     return 0;
@@ -37,7 +35,7 @@ int ls_file(MINODE *mip, char *name)
 {
     int i;
     time_t time;
-    char temp[64];
+    char temp[64], l_name[128], buf[BLKSIZE];
 
     INODE *ip = &mip->inode;
     putchar('\n');
@@ -46,8 +44,14 @@ int ls_file(MINODE *mip, char *name)
         printf(" -");
     else if ((ip->i_mode & 0xF000) == 0x4000) // is_dir
         printf(" d");
-    else if ((ip->i_mode & 0xF000) == 0xA000) // is_link
+    else if ((ip->i_mode & 0xF000) == 0xA000){ // is_link
         printf(" l");
+        // get link file name
+        get_block(mip->dev, mip->inode.i_block[0], buf);
+        strcpy(l_name, buf);
+        put_block(mip->dev, mip->inode.i_block[0], buf);
+        l_name[strlen(l_name)] = 0;
+    }
 
     for (i=8; i >= 0; i--) // permissions
         if (ip->i_mode & (1 << i))
@@ -65,6 +69,11 @@ int ls_file(MINODE *mip, char *name)
     temp[strlen(temp)-1]=0;
     printf("%s ", temp); // time
     printf("%s", name); // name
+
+    if ((ip->i_mode & 0xF000) == 0xA000)
+        printf(" -> %s", l_name);
+
+    iput(mip);
     
     return 0;
 }
@@ -78,6 +87,10 @@ int ls_dir(MINODE *mip)
     get_block(dev, mip->inode.i_block[0], buf); 
     dp = (DIR *)buf;
     cp = buf;
+
+    printf("[ls]: mip->ino=%d\n", mip->ino);
+    if (mip->ino == 0)
+        return 0;
   
     while (cp < buf + BLKSIZE){
         strncpy(temp, dp->name, dp->name_len);
@@ -85,6 +98,7 @@ int ls_dir(MINODE *mip)
 	
         //printf("[%d %s]  ", dp->inode, temp); // print [inode# name]
         MINODE *fmip = iget(dev, dp->inode);
+        fmip->dirty=0;
         ls_file(fmip, temp);
 
         cp += dp->rec_len;
@@ -93,24 +107,25 @@ int ls_dir(MINODE *mip)
     putchar('\n');
     putchar('\n');
 
+    iput(mip);
+
     return 0;
 }
 
 int ls(char *pathname)  
 {
-    printf("ls %s\n", pathname);
-    //printf("ls CWD only! YOU do it for ANY pathname\n");
     u32 *ino = malloc(32);
     findino(running->cwd, ino);
 
-    printf("strlen(pathname)=%d\n", (int)strlen(pathname));
-
-    if (strlen(pathname) > 0)
+    if (strlen(pathname) > 0){
+        printf("[ls]: path=%s\n", pathname);
         *ino = getino(pathname);
+    }
 
+    printf("[ls]: no path\n");
+    
     if (ino != 0)
         ls_dir(iget(dev, *ino));
-
 
     return 0;
 }
@@ -130,6 +145,8 @@ char *rpwd(MINODE *wd){
 
     rpwd(pip);
     printf("/%s", my_name);
+
+    iput(pip);
 
     return 0;
 }
@@ -169,13 +186,11 @@ int make_dir(char *pathname){
     path = dirname(cpy);
     name = basename(pathname);
 
-    printf(" mkdir path=%s\n", path);
-    printf(" mkdir name=%s\n", name);
-
     pino = getino(path);
     pmip = iget(dev, pino);
 
     if ((pmip->inode.i_mode & 0xF000) == 0x4000){ // is_dir
+        printf("[mkdir]: pmip is a dir\n");
         if (search(pmip, name)==0){ // if can't find child name in start MINODE
             r = mymkdir(pmip, name);
             pmip->inode.i_links_count++; // increment link count
@@ -183,12 +198,15 @@ int make_dir(char *pathname){
             pmip->dirty = 1; // make dirty
             iput(pmip); // write to disk
 
-            printf("\n Successfully made new directory = %s\n\n", pathname);
+            printf("\n[mkdir]: new directory = %s\n\n", pathname);
             return r;
         } else {
-            printf("\n That directory name=%s already exists.\n\n", name);
+            printf("\n[mkdir]: Dir %s already exists.\n\n", name);
+            iput(pmip);
         }
     }
+
+    iput(pmip);
 
     return 0;
 }
@@ -199,14 +217,14 @@ int mymkdir(MINODE *pip, char *name){
     MINODE *mip;
     INODE *ip;
     int ino = ialloc(dev), bno = balloc(dev), i;
-    printf("ino=%d\t bno=%d\n", ino, bno);
+    printf("[mkdir]: ino=%d bno=%d\n", ino, bno);
 
     mip = iget(dev, ino);
     ip = &mip->inode;
 
     char temp[256];
     findmyname(pip, pip->ino, temp);
-    printf(" mycreat : ino=%d name=%s\n", pip->ino, temp);
+    printf("[mkdir]: ino=%d name=%s\n", pip->ino, temp);
 
     ip->i_mode = 0x41ED; // set to dir type and set perms
     ip->i_uid = running->uid; // set owner uid
@@ -222,7 +240,7 @@ int mymkdir(MINODE *pip, char *name){
 
     mip->dirty = 1; // make dirty
     iput(mip); // write to disk
-    printf("write INODE to disk\n");
+    printf("[mymkdir]: wrote mip to disk\n");
 
     bzero(buf, BLKSIZE);
     cp = buf;
@@ -242,7 +260,7 @@ int mymkdir(MINODE *pip, char *name){
     dp->name[0] = dp->name[1] = '.';
 
     put_block(dev, bno, buf); // write buf to disk at bno
-    printf("write data block %d to disk\n", bno);
+    printf("[mymkdir]: write data block %d to disk\n", bno);
     enter_name(pip, ino, name);
 
     return 0;
@@ -266,8 +284,8 @@ int creat_file(char *pathname){
     path = dirname(cpy);
     name = basename(pathname);
 
-    printf(" creat path=%s\n", path);
-    printf(" creat file=%s\n", name);
+    printf("[touch]: path=%s\n", path);
+    printf("[touch]: file=%s\n", name);
 
     pino = getino(path);
     pmip = iget(dev, pino);
@@ -279,10 +297,11 @@ int creat_file(char *pathname){
             pmip->dirty = 1; // make dirty
             iput(pmip); // write to disk
 
-            printf("\n Successfully created new file = %s\n\n", pathname);
+            printf("\n[touch]: Successfully created new file = %s\n\n", pathname);
             return r;
         } else {
-            printf("\n That file name=%s already exists.\n\n", name);
+            printf("\n[touch]: That file name=%s already exists.\n\n", name);
+            iput(pmip);
         }
     }
 
@@ -297,9 +316,6 @@ int mycreat(MINODE *pip, char *name){
     mip = iget(dev, ino);
     ip = &mip->inode;
 
-    printf(" mycreat : search(pip)2\n");
-    search(pip, "b");
-
     ip->i_mode = 0x81A4; // set to file type and set perms
     ip->i_uid = running->uid; // set owner uid
     ip->i_gid = running->gid; // set group id
@@ -310,12 +326,129 @@ int mycreat(MINODE *pip, char *name){
     ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L); // set to current time
 
     mip->dirty = 1;
-    iput(mip);
-    printf("write INODE to disk\n");
+    printf("[mycreat]: write INODE to disk\n");
 
     enter_name(pip, ino, name);
+
+    iput(mip);
 
     return 0;
 }
 
-int create();
+// Does not handle rmdir of . or .. or /
+int rm_dir(char *pathname){
+    DIR *dp;
+    char buf[BLKSIZE], name[256], temp[256], *cp;
+    MINODE *mip, *pmip;
+    int i, ino, pino;
+
+    strcpy(temp, pathname);
+
+    ino = getino(pathname);
+    mip = iget(dev, ino);
+
+    findmyname(mip, ino, name);
+    printf("[rm_dir] : path=%s pino=%d parent name=%s\n", pathname, mip->ino, name);
+
+    //show(mip); not working for some reason?
+
+    printf("[rm_dir]: running->uid=%d ", running->uid);
+    printf("[rm_dir]: ino->i_uid=%d\n", mip->inode.i_uid);
+
+    if (running->uid != mip->inode.i_uid) return 0; // How to check if running PROC is superuser?
+    printf("[rm_dir]: running->uid == ino->i_uid\n");
+
+    if ((mip->inode.i_mode & 0xF000) == 0x4000 && mip->refCount <= 1){ // if is a dir and not being used
+        printf("[rm_dir]: mip is a dir\n");
+        printf("[rm_dir]: mip link_count=%d\n", mip->inode.i_links_count);
+        
+        if (mip->inode.i_links_count <= 2){ // could still have reg files
+            int actual_links=0;
+    
+            get_block(dev, mip->inode.i_block[0], buf);
+            dp = (DIR*)buf;
+            cp = buf;
+
+            while (cp < buf + BLKSIZE){
+                actual_links++;
+
+                cp += dp->rec_len;
+                dp = (DIR*)cp;
+            }
+
+            if (actual_links <= 2){ // good to go
+                for (i=0; i<12; i++){
+                    if (mip->inode.i_block[i]==0)
+                        continue;
+                    else
+                        bdalloc(mip->dev, mip->inode.i_block[i]); // dealloc mip blocks
+                }
+                idalloc(mip->dev, mip->ino); // dealloc mip inode
+                iput(mip); // put it
+
+                u32 *inum = malloc(8);
+                pino = findino(mip, inum);
+                pmip = iget(mip->dev, pino);
+                findmyname(pmip, ino, name); // find the name of the dir to be deleted
+                printf("[rm_dir]: pino=%d ino=%d name=%s\n", pino, ino, name);
+                
+                if (strcmp(name, ".") != 0 && strcmp(name, "..") != 0 && strcmp(name, "/") != 0){
+                    rm_name(pmip, name); // remove name from parent's dir 
+                    pmip->inode.i_links_count--; // dec link count
+                    pmip->inode.i_atime = pmip->inode.i_mtime = time(0L); // touch a/mtime
+                    pmip->dirty = 1; // mark dirty
+                    bdalloc(pmip->dev, mip->inode.i_block[0]);
+                    idalloc(pmip->dev, mip->ino);
+                    iput(pmip);
+                }
+            } else
+                printf("[rm_dir]: mip has children2! link_count=%d\n", actual_links);
+        } else
+            printf("[rm_dir]: mip has children1! link_count=%d\n", mip->inode.i_links_count);
+    } else if (mip->refCount > 1){
+        printf("[rm_dir]: mip=%d is in use, refCount=%d!\n", mip->ino, mip->refCount);
+        iput(mip);
+    }
+    else{
+        printf("[rm_dir]: mip is not a dir!\n");
+        iput(mip);
+    }
+
+    return 0;
+}
+
+int sym_link(char *src, char *dest){
+    int sino, dino;
+    char *name, temp[128], buf[BLKSIZE];
+    MINODE *mip, *pmip;
+
+    strcpy(temp, src);
+    //path = dirname(temp);
+    name = basename(src);
+    name[strlen(name)] = 0;
+
+    sino = getino(src);
+    dino = getino(dest);
+    if (sino > 0 && dino == 0){
+        printf("[sym_link]: src exists and dest does not!\n");
+        printf("[sym_link]: creating new file=%s\n", dest);
+        creat_file(dest);
+        dino = getino(dest);
+        printf("[sym_link]: dest_ino=%d\n", dino);
+
+        mip = iget(dev, dino);
+        mip->inode.i_mode = 0127777; // set new (link) file type to link
+        get_block(mip->dev, mip->inode.i_block[0], buf); // put name in link file block area
+        strcpy(buf, name);
+        put_block(mip->dev, mip->inode.i_block[0], buf);
+        mip->inode.i_size = strlen(name); // modify size to = old file name
+        mip->dirty = 1;
+        iput(mip);
+    }
+
+
+
+
+
+    return 0;
+}

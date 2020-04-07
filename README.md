@@ -10,7 +10,7 @@ Includes all of K.C's util functions as well as ones that we've had to Implement
 Inlcudes K.C's predefined types, moved some global definitions to this file as well.
 
 ### mk:
-Calls mkdisk and internally then compiles main.c and runs it.
+Calls mkdisk internally and then compiles main.c and runs it.
 
 ```
         type.h
