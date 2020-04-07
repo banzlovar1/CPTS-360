@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm mkdir_creat
+rm proj mydisk
 sudo ./mkdisk
-gcc main.c -o mkdir_creat
-./mkdir_creat
+gcc main.c -o proj 
+./proj

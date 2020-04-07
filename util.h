@@ -21,8 +21,6 @@ int getino(char *pathname);
 int findmyname(MINODE *parent, u32 myino, char *myname);
 int show(MINODE *mip);
 int findino(MINODE *mip, u32 *myino);
-int enter_name(MINODE *pip, int myino, char *myname);
-int rm_name(MINODE *pmip, char *name);
 int abs_path(char *path);
 int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);
