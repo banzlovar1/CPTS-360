@@ -1,3 +1,6 @@
+#!/bin/bash
+
+rm proj mydisk
 sudo ./mkdisk
-gcc main.c
-./a.out
+gcc main.c -o proj 
+./proj

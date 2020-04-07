@@ -2,8 +2,6 @@
 
 extern int dev, imap, bmap, ninodes, nblocks;
 
-int unlink_file(char *filename);
-
 int unlink_file(char *filename)
 {
     char cpy[128];

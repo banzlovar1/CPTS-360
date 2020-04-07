@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /************* cd_ls_pwd.c file **************/
 #include "commands.h"
 
@@ -452,3 +453,5 @@ int sym_link(char *src, char *dest){
 
     return 0;
 }
+=======
+>>>>>>> 8bb95b2d787ecc98601cede73c9fe02f9ab13032
