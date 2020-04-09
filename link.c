@@ -1,3 +1,5 @@
+#include "commands.h"
+
 int link_file(char *pathname, char *linkname)
 {
     MINODE *start;

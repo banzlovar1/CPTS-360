@@ -2,8 +2,10 @@
 *                   KCW  Implement ext2 file system                         *
 *****************************************************************************/
 #include "util.c"
-#include "commands.c"
+#include "commands.h"
+
 #include "link.c"
+
 #include "unlink.c"
 
 // global variables
