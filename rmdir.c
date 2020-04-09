@@ -67,9 +67,9 @@ int rm_dir(char *pathname){
                     iput(pmip);
                 }
             } else
-                printf("[rm_dir]: mip has children2! link_count=%d\n", actual_links);
+                printf("[rm_dir]: mip has children! link_count=%d\n", actual_links);
         } else
-            printf("[rm_dir]: mip has children1! link_count=%d\n", mip->inode.i_links_count);
+            printf("[rm_dir]: mip has children! link_count=%d\n", mip->inode.i_links_count);
     } else if (mip->refCount > 1){
         printf("[rm_dir]: mip=%d is in use, refCount=%d!\n", mip->ino, mip->refCount);
         iput(mip);
