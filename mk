@@ -1,3 +1,6 @@
-sudo ./mkdisk
-gcc main.c
-./a.out
+#!/bin/bash
+
+rm proj diskimage 
+sudo ./mkdisk2
+gcc main.c -o proj 
+./proj

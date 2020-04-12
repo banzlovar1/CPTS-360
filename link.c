@@ -2,7 +2,7 @@
 
 int link_file(char *pathname, char *linkname)
 {
-    MINODE *start;
+    //MINODE *start;
     char cpy[40];
     strcpy(cpy, pathname);
     //char *parent = dirname(pathname);

@@ -1,12 +1,13 @@
-/****************************************************************************
-*                   KCW  Implement ext2 file system                         *
-*****************************************************************************/
+// Lucas Mason, Brett Anzlovar cs360 project
 #include "util.c"
-#include "commands.h"
-
+#include "mountroot.c"
+#include "cd_ls_pwd.c"
+#include "mkdir_creat.c"
+#include "rmdir.c"
+#include "symlink.c"
 #include "link.c"
-
 #include "unlink.c"
+#include "open.c"
 
 // global variables
 MINODE minode[NMINODE];
@@ -108,17 +109,17 @@ int main(int argc, char *argv[ ])
     // WRTIE code here to create P1 as a USER process
   
     while(1){
-        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|quit] ");
+        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|quit] ");
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 
-        *src=*dest=0;
+        *src=*dest=0; // reset src and dest strings
 
         if (line[0]==0)
         continue;
 
         sscanf(line, "%s %s %s", cmd, src, dest);
-        printf("cmd=%s src=%s dest=%s\n", cmd, src, dest);
+        printf("[main]: cmd=%s src=%s dest=%s\n", cmd, src, dest);
 
         src[strlen(src)] = 0;
         dest[strlen(dest)] = 0;
@@ -141,6 +142,8 @@ int main(int argc, char *argv[ ])
             link_file(src, dest);
         else if (strcmp(cmd, "unlink")==0)
             unlink_file(src);
+        else if (strcmp(cmd, "open")==0)
+            open_file(src, dest);
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)
             quit();
     }
