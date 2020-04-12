@@ -1,6 +1,6 @@
 #!/bin/bash
 
 rm proj mydisk
-sudo ./mkdisk
+sudo ./mkdisk2
 gcc main.c -o proj 
 ./proj

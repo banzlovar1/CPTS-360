@@ -47,4 +47,8 @@ int link_file(char *pathname, char *linkname);
 // unlink.c
 int unlink_file(char *filename);
 
+// open_close.c
+int open_file(char *pathname, char *mode);
+int truncate_file(MINODE *mip);
+
 #endif
