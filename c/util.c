@@ -249,6 +249,7 @@ int show(MINODE *mip){
     return 0;
 }
 
+// LEVEL 1
 int abs_path(char *path){
     if (path[0] == '/')
         return 0;
@@ -414,6 +415,37 @@ int bdalloc(int dev, int blk){
 
     inc_free_blocks(dev);
     printf("[bdalloc]: deallocated block=%d\n", blk-1);
+
+    return 0;
+}
+
+// LEVEL 2
+int pfd(){
+    int i;
+    printf("\n[pfd]:  fd   mode   offset   INODE\n");
+    printf("[pfd]: ---- ------ -------- -------\n");
+    for (i=0; i<NFD; i++){
+        if (running->fd[i]){
+            OFT *cur = running->fd[i];
+            char mode[8];
+
+            switch(cur->mode){
+                case 0:
+                    strcpy(mode, "READ"); break;
+                case 1:
+                    strcpy(mode, "WRITE"); break;
+                case 2:
+                    strcpy(mode, "R/W"); break;
+                case 3:
+                    strcpy(mode, "APPEND"); break;
+            }
+
+            printf("[pfd]:   %d %6s  %4d     [%d, %d]\n", i, mode, cur->offset,
+                    cur->mptr->dev, cur->mptr->ino);
+        } else
+            break; // no more open fds
+    }
+    putchar('\n');
 
     return 0;
 }

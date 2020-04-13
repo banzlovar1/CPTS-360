@@ -14,6 +14,7 @@ MINODE minode[NMINODE];
 MINODE *root;
 
 PROC proc[NPROC], *running;
+OFT oft[NOFT];
 
 char gpath[128]; // global for tokenized components
 char *name[32];  // assume at most 32 components in pathname
@@ -109,7 +110,7 @@ int main(int argc, char *argv[ ])
     // WRTIE code here to create P1 as a USER process
   
     while(1){
-        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|quit] ");
+        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|pfd|quit] ");
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 
@@ -144,6 +145,8 @@ int main(int argc, char *argv[ ])
             unlink_file(src);
         else if (strcmp(cmd, "open")==0)
             open_file(src, dest);
+        else if (strcmp(cmd, "pfd")==0)
+            pfd();
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)
             quit();
     }
