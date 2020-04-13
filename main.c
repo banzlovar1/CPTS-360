@@ -7,7 +7,7 @@
 #include "symlink.c"
 #include "link.c"
 #include "unlink.c"
-#include "open.c"
+#include "open_close_lseek.c"
 
 // global variables
 MINODE minode[NMINODE];
