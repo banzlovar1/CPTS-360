@@ -28,6 +28,7 @@ DIR   *dp;
 #define NMINODE      128
 #define NFD           16
 #define NPROC          2
+#define NOFT          40
 
 typedef struct minode{
     INODE inode;

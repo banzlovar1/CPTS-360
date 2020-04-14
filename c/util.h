@@ -36,4 +36,6 @@ int idalloc(int dev, int ino);
 int balloc(int dev);
 int bdalloc(int dev, int blk);
 
+int pfd();
+
 #endif
