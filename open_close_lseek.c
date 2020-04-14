@@ -127,4 +127,5 @@ int lseek_file(int fd, int position)
     }
     printf("Postion less than 0: Not allowed\n");
     
+    return 0;
 }
