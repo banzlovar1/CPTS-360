@@ -110,7 +110,7 @@ int main(int argc, char *argv[ ])
     // WRTIE code here to create P1 as a USER process
   
     while(1){
-        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|pfd|quit] ");
+        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|close|pfd|quit] ");
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 
@@ -145,6 +145,8 @@ int main(int argc, char *argv[ ])
             unlink_file(src);
         else if (strcmp(cmd, "open")==0)
             open_file(src, dest);
+        else if (strcmp(cmd, "close")==0)
+            close_file(src);
         else if (strcmp(cmd, "pfd")==0)
             pfd();
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)
