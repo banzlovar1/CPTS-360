@@ -5,7 +5,7 @@ int mv_file(char *src, char *dest)
     int sfd = open_file(src, "0");
     MINODE *mip = running->fd[sfd]->mptr;
     // Same Dev link then remove src
-    if(mip->dev == sfd)
+    if(mip->dev == fd)
     {
         printf("Same Dev\n");
         link_file(src, dest);
@@ -18,5 +18,5 @@ int mv_file(char *src, char *dest)
         //close_file(fd);
     }
     
-    return 0;
+
 }
