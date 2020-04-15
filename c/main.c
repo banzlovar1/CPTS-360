@@ -9,6 +9,9 @@
 #include "unlink.c"
 #include "open_close_lseek.c"
 #include "read_cat.c"
+#include "write.c"
+#include "cp.c"
+#include "mv.c"
 
 // global variables
 MINODE minode[NMINODE];
@@ -111,7 +114,7 @@ int main(int argc, char *argv[ ])
     // WRTIE code here to create P1 as a USER process
   
     while(1){
-        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|cat|close|pfd|quit] ");
+        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|lseek|write|close|cat||cp|mv|pfd|quit] ");
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 
@@ -151,9 +154,17 @@ int main(int argc, char *argv[ ])
         else if (strcmp(cmd, "cat")==0)
             cat_file(src);
         else if (strcmp(cmd, "close")==0)
-            close_file(src);
+            close_file(atoi(src));
+        else if (strcmp(cmd, "lseek")==0)
+            lseek_file(atoi(src), atoi(dest));
         else if (strcmp(cmd, "pfd")==0)
             pfd();
+        else if (strcmp(cmd, "cp")==0)
+            cp_file(src, dest);
+         else if (strcmp(cmd, "mv")==0)
+            mv_file(src, dest);
+        else if (strcmp(cmd, "write")==0)
+            write_file();
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)
             quit();
     }
