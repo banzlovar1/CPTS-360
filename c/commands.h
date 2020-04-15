@@ -50,10 +50,15 @@ int unlink_file(char *filename);
 // open_close_lseek.c
 int open_file(char *pathname, char *mode);
 int truncate_file(MINODE *mip);
+int close_file(int fd);
 
 // read_cat.c
 int read_file(char *fd, char *bytes);
-int myread(int fd, char *buf, int bytes);
+int myread(int fd, char *buf, int bytes, int supress_msg);
 int cat_file(char *pathname);
+
+//write.c
+int write_file();
+int mywrite(int fd, char *buf, int nbytes);
 
 #endif

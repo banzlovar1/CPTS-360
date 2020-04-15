@@ -90,9 +90,8 @@ int truncate_file(MINODE *mip){
     return 0;
 }
 
-int close_file(char g[50])
+int close_file(int fd)
 {
-    int fd = atoi(g);
     // See if the file descriptor exists
     if(fd < 0 || fd >=NFD)
     {
@@ -118,7 +117,7 @@ int close_file(char g[50])
 
 int lseek_file(int fd, int position)
 {
-    if(fd < 1 || running->fd[fd] == NULL)
+    if(fd < 0 || running->fd[fd] == NULL)
     {
         printf("[lseek_file]: Cannot Locate file\n");
         return -1;
