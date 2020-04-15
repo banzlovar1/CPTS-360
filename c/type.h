@@ -43,7 +43,7 @@ typedef struct oft{
     int  mode;
     int  refCount;
     MINODE *mptr;
-  int  offset;
+    int  offset;
 }OFT;
 
 typedef struct proc{

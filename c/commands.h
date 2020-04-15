@@ -51,4 +51,9 @@ int unlink_file(char *filename);
 int open_file(char *pathname, char *mode);
 int truncate_file(MINODE *mip);
 
+// read_cat.c
+int read_file(char *fd, char *bytes);
+int myread(int fd, char *buf, int bytes);
+int cat_file(char *pathname);
+
 #endif

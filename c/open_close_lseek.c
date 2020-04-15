@@ -19,8 +19,19 @@ int open_file(char *pathname, char *mode){
         return -1;
 
     // check if file is already open with incompatible mode
+    if (i_mode > 0){ // if not open for read
+        for (i=0; i<NFD; i++){
+            if (running->fd[i] != NULL && running->fd[i]->mptr == mip){
+                if (running->fd[i]->mode > 0){
+                    printf("[open_file]: %s already open for write!\n\n", pathname);
+                    return -1;
+                }
+            } else
+                break;
+        }
+    }
     
-    open = (OFT*)malloc(sizeof(open)); // build the open fd
+    open = (OFT*)malloc(sizeof(OFT)); // build the open fd
     open->mode = i_mode;
     open->refCount = 1;
     open->mptr = mip;
@@ -85,12 +96,12 @@ int close_file(char g[50])
     // See if the file descriptor exists
     if(fd < 0 || fd >=NFD)
     {
-        printf("File out of range\n");
+        printf("[close_file]: File out of range\n");
         return -1;
     }
     if(running->fd[fd] == NULL)
     {
-        printf("File does not exist\n");
+        printf("[close_file]: File does not exist\n");
         return -1;
     }
 
@@ -109,21 +120,21 @@ int lseek_file(int fd, int position)
 {
     if(fd < 1 || running->fd[fd] == NULL)
     {
-        printf("Cannot Locate file\n");
+        printf("[lseek_file]: Cannot Locate file\n");
         return -1;
     }
     if(position > 0)
     {
         if(position >running->fd[fd]->mptr->inode.i_size)
         {
-            printf("Position is larger than the size of fd\n");
+            printf("[lseek_file]: Position is larger than the size of fd\n");
             return -1;
         }
         int off = running->fd[fd]->offset;
         running->fd[fd]->offset = position;
         return off;
     }
-    printf("Postion less than 0: Not allowed\n");
+    printf("[lseek_file]: Postion less than 0: Not allowed\n");
     
     return 0;
 }
