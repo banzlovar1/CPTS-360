@@ -66,7 +66,7 @@ int mount_root()
     return 0;
 }
 
-char *disk = "diskimage";
+char *disk = "mydisk";
 int main(int argc, char *argv[ ])
 {
     //int ino;
