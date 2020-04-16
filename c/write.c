@@ -22,72 +22,95 @@ int write_file()
     return -1;
 }
 
-int mywrite(int fd, char *buf, int nbytes)
+int mywrite(int fd, char buf[], int nbytes)
 {
     printf("[mywrite]: %s %d\n", buf, nbytes);
     int count = nbytes, blk, dblk, *u;
-    int ibuf[256], dbuf[256];
+    int ibuf[256], dbuf[256], buf13[256];
     char wbuf[BLKSIZE];
-    OFT *oftp = running->fd[fd];
-    MINODE *mip = running->fd[fd]->mptr;
-    while(nbytes)
+    OFT *oftp;
+    oftp = running->fd[fd];
+    MINODE *mip;
+    mip = oftp->mptr;
+    while(nbytes > 0)
     {
+        // Logical block
         int lbk = oftp->offset / BLKSIZE;
+        // Start Byte
         int startByte = oftp->offset % BLKSIZE;
         // Direct Block
         if(lbk <12)
         {
             printf("[mywrite]: Direct Block\n");
+            // If no data block is present, allocate one
             if(mip->inode.i_block[lbk] == 0)
                 mip->inode.i_block[lbk] = balloc(mip->dev);
+            // Saves Block into blk
             blk  = mip->inode.i_block[lbk];
         }
         // Indirect Block
         else if(lbk >= 12 && lbk < 256 + 12)
         {
             printf("[mywrite]: Indirect Block\n");
+	        // Like above, if no data block allocate one
             if(mip->inode.i_block[12] == 0)
             {
+                // Allocate block
                 mip->inode.i_block[12] = balloc(mip->dev);
-                for(int i = 0; i < 256; i++)
-                    ibuf[i] = 0;
+                // Get block into memmory
+                get_block(mip->dev, mip->inode.i_block[12], (char *)ibuf);
+                // Zero it out
+                memset(ibuf, 0, 256);
+                // Put block into memory
+                put_block(mip->dev,mip->inode.i_block[12], (char *)ibuf);
             }
+            // Get block into ibuf
             get_block(mip->dev, mip->inode.i_block[12], (char *)ibuf);
-            int blk = ibuf[lbk -12];
+            // Set blk to disk block
+            blk = ibuf[lbk -12];
+            // If 0 allocate it
             if(blk ==0)
             {
-               mip->inode.i_block[lbk] = balloc(mip->dev);
-               ibuf[lbk -12] = mip->inode.i_block[lbk];
+                mip->inode.i_block[12] = balloc(mip->dev);
+                ibuf[lbk -12] = mip->inode.i_block[lbk];
             }
         }
         // Double indirect blocks
         else
         {
+            // From the help posted by KC
             printf("[mywrite]: Double Indirect Block\n");
-            get_block(mip->dev,mip->inode.i_block[13], (char *)dbuf);
-            lbk -= (12+256);
-            dblk = dbuf[lbk/256];
-            get_block(mip->dev, mip->inode.i_block[13], (char *)dbuf);
-            blk = dbuf[lbk % 256];
+            lbk -= (256+12);
+            get_block(mip->dev,mip->inode.i_block[13], (char *)buf13);
+            dblk = buf13[lbk/256];
+            get_block(mip->dev, dblk, (char *)dbuf);
+            blk = dbuf[lbk %256];
         }
-        get_block(mip->dev, blk,wbuf);
-        char *cp;
-        cp = wbuf + startByte;
+        // Reset wbuf as to not add too many characters in the last buffer
+        memset(wbuf, 0, BLKSIZE);
+        // Get data block blk into wbuf
+        get_block(mip->dev, blk, wbuf);
+        // Set the start point of wbuf
+        char *cp = wbuf + startByte;
         int remain = BLKSIZE -startByte;
-        char *cq;
-        cq = (char *)buf;
+        char *cq = buf; 
+        // Write until remain == 0
         while(remain > 0)
         {
             *cp++ = *cq++;
             nbytes--; remain--;
             oftp->offset++;
+            // If offset is greater than size increase file size
             if(oftp->offset > mip->inode.i_size)
                 mip->inode.i_size++;
+            // Break when you have read all the bytes
             if(nbytes <= 0)
                 break;
         }
+        // Put wbuf into data block blk
         put_block(mip->dev,blk,wbuf);
     }
+    // Mark as dirty to save when done
     mip->dirty =1;
     printf("[mywrite]: Wrote %d char into file descriptor fd=%d\n", count,fd);
     return nbytes;
