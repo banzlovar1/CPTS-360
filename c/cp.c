@@ -12,12 +12,11 @@ int cp_file(char *src, char *dest)
         int ino = creat_file(dest);
         gd = open_file(dest, "1");;
     }
-    /* Need read to complete
-    while( n = myread(fd, buf, BLKSIZE))
+    //Need read to complete
+    while( n = myread(fd, buf, BLKSIZE, 0))
     {
         mywrite(gd, buf, n);
     }
-    */
     close_file(fd);
     close_file(gd);
     
