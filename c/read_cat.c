@@ -19,8 +19,7 @@ int min3(int a, int b, int c){
 
 int myread(int fd, char *buf, int nbytes, int supress_msg){
     char readbuf[BLKSIZE];
-    int count=0, blk, lblk, start, remain, avail;
-    char *cq = buf;
+    int count=0, blk, lblk, dblk, start, remain, avail, ibuf[256], dbuf[256];
 
     if (running->fd[fd] == NULL){ // make sure fd exists
         printf("[myread]: fd is NULL!");
@@ -38,12 +37,29 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
         lblk = oftp->offset / BLKSIZE;
         start = oftp->offset % BLKSIZE;
 
-        if (lblk < 12)
+        if (lblk < 12){ // direct blocks
+            if (!supress_msg)
+                printf("[myread]: direct block\n");
             blk = mip->inode.i_block[0];
-        else if (lblk >= 12 && lblk < 256 + 12){}
-            // indirect blocks
-        else{}
-            // double indirect blocks
+        }
+        else if (lblk >= 12 && lblk < 256 + 12){ // indirect blocks
+            if (!supress_msg)
+                printf("[myread]: indirect block\n");
+
+            get_block(mip->dev, mip->inode.i_block[12], (char*)ibuf); // from book
+            blk = ibuf[lblk-12];
+        }
+        else{ // double indirect blocks ||| Ask K.C after class
+            if (!supress_msg)
+                printf("[myread]: double indirect block\n");
+            
+            char buf13[256];
+            get_block(mip->dev, mip->inode.i_block[13], buf13); // mailman's alg (and K.C's help)
+            lblk -= 268;
+            dblk = buf13[lblk/256];
+            get_block(mip->dev, mip->inode.i_block[13], (char*)dbuf); // question: get dblk into dbuf[256];???
+            blk = dbuf[lblk % 256];
+        }
 
         get_block(mip->dev, blk, readbuf);
         char *cp = readbuf + start; // takes care of offset
@@ -78,11 +94,13 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
 }
 
 int cat_file(char *filename){
-    char mybuf[BLKSIZE], temp=0;
+    char mybuf[BLKSIZE];
     int n, i, fd = open_file(filename, "0");
 
+    mybuf[BLKSIZE]=0; // terminate mybuf
+
     printf("[cat_file]:\n\n");
-    while ((n = myread(fd, mybuf, BLKSIZE, 1))){
+    while ((n = myread(fd, mybuf, BLKSIZE, 0))){
         mybuf[n]=0;
 
         for (i=0; i<n; i++){
