@@ -7,7 +7,7 @@ int mv_file(char *src, char *dest)
     // Same Dev link then remove src
     if(mip->dev == sfd)
     {
-        printf("Same Dev\n");
+        printf("\n\nSame Dev\n\n\n\n");
         link_file(src, dest);
         unlink_file(src);
     }
@@ -15,7 +15,8 @@ int mv_file(char *src, char *dest)
     else
     {
         printf("Different Dev\n");
-        //close_file(fd);
+        cp_file(src, dest);
+        unlink_file(src);
     }
     
     return 0;
