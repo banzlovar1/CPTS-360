@@ -89,8 +89,8 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
         //        break;
         //}
         if (!supress_msg){
-            printf("[myread]: nbytes=%d", count);
-            printf(" text=%s\n", buf);
+            printf("[myread]: nbytes=%d len(buf)=%d\n", count, (int)strlen(buf));
+            //printf(" text=%s\n", buf);
         }
     }
 

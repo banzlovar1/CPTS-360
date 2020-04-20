@@ -24,7 +24,7 @@ int write_file()
 
 int mywrite(int fd, char buf[], int nbytes)
 {
-    printf("[mywrite]: %s %d\n", buf, nbytes);
+    printf("[mywrite]: %d %d\n", strlen(buf), nbytes);
     int count = nbytes, blk, dblk, *u;
     int ibuf[256], dbuf[256], buf13[256];
     char wbuf[BLKSIZE];
