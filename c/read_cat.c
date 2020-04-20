@@ -28,6 +28,8 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
     OFT *oftp = running->fd[fd];
     MINODE *mip = oftp->mptr;
 
+    if (!mip || !oftp) return -1;
+
     avail = mip->inode.i_size - oftp->offset;
 
     if (!supress_msg)
@@ -49,15 +51,15 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
             get_block(mip->dev, mip->inode.i_block[12], (char*)ibuf); // from book
             blk = ibuf[lblk-12];
         }
-        else{ // double indirect blocks ||| Ask K.C after class
+        else{
             if (!supress_msg)
                 printf("[myread]: double indirect block\n");
             
             lblk -= 268;
             int buf13[256];
-            get_block(mip->dev, mip->inode.i_block[13], (char*)buf13); // mailman's alg (and K.C's help)
+            get_block(mip->dev, mip->inode.i_block[13], (char*)buf13);
             dblk = buf13[lblk/256];
-            get_block(mip->dev, dblk, (char*)dbuf); // question: get dblk into dbuf[256];???
+            get_block(mip->dev, dblk, (char*)dbuf);
             blk = dbuf[lblk % 256];
         }
 
@@ -99,6 +101,8 @@ int cat_file(char *filename){
     char mybuf[BLKSIZE];
     int len=0, n, i, fd = open_file(filename, "0");
 
+    if (fd < 0) return -1;
+
     mybuf[BLKSIZE]=0; // terminate mybuf
 
     printf("[cat_file]:\n\n");
@@ -106,12 +110,9 @@ int cat_file(char *filename){
         mybuf[n]=0;
 
         for (i=0; i<n; i++){
-            if (mybuf[i] == '\\'){
-                i++;
-                if (mybuf[i] == 'n'){
-                    putchar('\n');
-                    continue;
-                }
+            if (mybuf[i] == '\\' && mybuf[i++] == 'n'){
+                putchar('\n');
+                continue;
             }
 
             putchar(mybuf[i]);
