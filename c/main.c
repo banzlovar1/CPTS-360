@@ -66,7 +66,7 @@ int mount_root()
     return 0;
 }
 
-char *disk = "mydisk";
+char *disk = "testdisk1";
 int main(int argc, char *argv[ ])
 {
     //int ino;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[ ])
     // WRTIE code here to create P1 as a USER process
   
     while(1){
-        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|lseek|write|close|cat||cp|mv|pfd|quit] ");
+        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|lseek|write|close|cat|cp|mv|pfd|quit] ");
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 

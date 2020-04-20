@@ -19,7 +19,7 @@ int min3(int a, int b, int c){
 
 int myread(int fd, char *buf, int nbytes, int supress_msg){
     char readbuf[BLKSIZE];
-    int count=0, blk, lblk, dblk, start, remain, avail, ibuf[256], dbuf[256];
+    int min, count=0, blk, lblk, dblk, start, remain, avail, ibuf[256], dbuf[256];
 
     if (running->fd[fd] == NULL){ // make sure fd exists
         printf("[myread]: fd is NULL!");
@@ -66,7 +66,7 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
         remain = BLKSIZE - start;
 
         // read optimization
-        int min = min3(nbytes, avail, remain);
+        min = min3(nbytes, avail, remain);
         if (!supress_msg)
             printf("[myread]: min=%d\n", min);
         strncpy(buf, cp, min);
@@ -87,20 +87,20 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
         //}
     }
 
-    if (!supress_msg)
-        printf("[myread]: nbytes=%d text=%s\n", count, buf);
+    //if (!supress_msg)
+    //    printf("[myread]: nbytes=%d text=%s\n", count, buf);
 
     return count;
 }
 
 int cat_file(char *filename){
     char mybuf[BLKSIZE];
-    int n, i, fd = open_file(filename, "0");
+    int len=0, n, i, fd = open_file(filename, "0");
 
     mybuf[BLKSIZE]=0; // terminate mybuf
 
     printf("[cat_file]:\n\n");
-    while ((n = myread(fd, mybuf, BLKSIZE, 0))){
+    while ((n = myread(fd, mybuf, BLKSIZE, 1))){
         mybuf[n]=0;
 
         for (i=0; i<n; i++){
@@ -114,8 +114,11 @@ int cat_file(char *filename){
 
             putchar(mybuf[i]);
         }
+
+        len += n;
     }
-    printf("\n\n");
+    putchar('\n');
+    printf("[cat_file]: Read %d bytes.\n\n", len);
 
     close_file(fd);
 
