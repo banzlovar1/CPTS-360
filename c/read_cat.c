@@ -19,7 +19,7 @@ int min3(int a, int b, int c){
 
 int myread(int fd, char *buf, int nbytes, int supress_msg){
     char readbuf[BLKSIZE];
-    int count=0, blk, lblk, dblk, start, remain, avail, ibuf[256], dbuf[256];
+    int min, count=0, blk, lblk, dblk, start, remain, avail, ibuf[256], dbuf[256];
 
     if (running->fd[fd] == NULL){ // make sure fd exists
         printf("[myread]: fd is NULL!");
@@ -40,7 +40,7 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
         if (lblk < 12){ // direct blocks
             if (!supress_msg)
                 printf("[myread]: direct block\n");
-            blk = mip->inode.i_block[0];
+            blk = mip->inode.i_block[lblk];
         }
         else if (lblk >= 12 && lblk < 256 + 12){ // indirect blocks
             if (!supress_msg)
@@ -53,11 +53,11 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
             if (!supress_msg)
                 printf("[myread]: double indirect block\n");
             
-            char buf13[256];
-            get_block(mip->dev, mip->inode.i_block[13], buf13); // mailman's alg (and K.C's help)
             lblk -= 268;
+            int buf13[256];
+            get_block(mip->dev, mip->inode.i_block[13], (char*)buf13); // mailman's alg (and K.C's help)
             dblk = buf13[lblk/256];
-            get_block(mip->dev, mip->inode.i_block[13], (char*)dbuf); // question: get dblk into dbuf[256];???
+            get_block(mip->dev, dblk, (char*)dbuf); // question: get dblk into dbuf[256];???
             blk = dbuf[lblk % 256];
         }
 
@@ -66,10 +66,11 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
         remain = BLKSIZE - start;
 
         // read optimization
-        int min = min3(nbytes, avail, remain);
+        min = min3(nbytes, avail, remain);
         if (!supress_msg)
-            printf("[myread]: min=%d\n", min);
+            printf("[myread]: offset=%d min=%d blk=%d\n", oftp->offset, min, blk);
         strncpy(buf, cp, min);
+        //char *cq = buf;
 
         oftp->offset += min;
         count += min;
@@ -85,22 +86,23 @@ int myread(int fd, char *buf, int nbytes, int supress_msg){
         //    if (nbytes <= 0 || avail <= 0)
         //        break;
         //}
+        if (!supress_msg){
+            printf("[myread]: nbytes=%d", count);
+            printf(" text=%s\n", buf);
+        }
     }
-
-    if (!supress_msg)
-        printf("[myread]: nbytes=%d text=%s\n", count, buf);
 
     return count;
 }
 
 int cat_file(char *filename){
     char mybuf[BLKSIZE];
-    int n, i, fd = open_file(filename, "0");
+    int len=0, n, i, fd = open_file(filename, "0");
 
     mybuf[BLKSIZE]=0; // terminate mybuf
 
     printf("[cat_file]:\n\n");
-    while ((n = myread(fd, mybuf, BLKSIZE, 0))){
+    while ((n = myread(fd, mybuf, BLKSIZE, 1))){
         mybuf[n]=0;
 
         for (i=0; i<n; i++){
@@ -114,8 +116,10 @@ int cat_file(char *filename){
 
             putchar(mybuf[i]);
         }
+
+        len += n;
     }
-    printf("\n\n");
+    printf("[cat_file]: Read %d bytes.\n\n", len);
 
     close_file(fd);
 

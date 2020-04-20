@@ -57,7 +57,7 @@ int ls_file(MINODE *mip, char *name)
     printf("%d ", ip->i_links_count); // link count
     printf("%d ", ip->i_uid); // owner
     printf("%d ", ip->i_gid); // group
-    printf("%5d ", ip->i_size); // byte size
+    printf("%6d ", ip->i_size); // byte size
     time = (time_t)ip->i_ctime;
     strcpy(temp, ctime(&time));
     temp[strlen(temp)-1]=0;
