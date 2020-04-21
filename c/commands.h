@@ -61,4 +61,8 @@ int cat_file(char *pathname);
 int write_file();
 int mywrite(int fd, char *buf, int nbytes);
 
+// mount_umount.c
+int mount();
+int umount(char *filesys);
+
 #endif

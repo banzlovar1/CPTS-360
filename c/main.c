@@ -1,6 +1,5 @@
 // Lucas Mason, Brett Anzlovar cs360 project
 #include "util.c"
-#include "mountroot.c"
 #include "cd_ls_pwd.c"
 #include "mkdir_creat.c"
 #include "rmdir.c"
@@ -12,6 +11,7 @@
 #include "write.c"
 #include "cp.c"
 #include "mv.c"
+#include "mount_umount.c"
 
 // global variables
 MINODE minode[NMINODE];
@@ -114,7 +114,7 @@ int main(int argc, char *argv[ ])
     // WRTIE code here to create P1 as a USER process
   
     while(1){
-        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|lseek|write|close|cat|cp|mv|pfd|quit] ");
+        printf("input command : [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|lseek|pfd|write|close|cat|cp|mv|mount|umount|quit] ");
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 
@@ -165,6 +165,10 @@ int main(int argc, char *argv[ ])
             mv_file(src, dest);
         else if (strcmp(cmd, "write")==0)
             write_file();
+        else if (strcmp(cmd, "mount")==0)
+            mount();
+        else if (strcmp(cmd, "umount")==0)
+            umount(src);
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)
             quit();
     }
