@@ -166,7 +166,7 @@ int main(int argc, char *argv[ ])
         else if (strcmp(cmd, "write")==0)
             write_file();
         else if (strcmp(cmd, "mount")==0)
-            mount();
+            mount(src, dest);
         else if (strcmp(cmd, "umount")==0)
             umount(src);
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)

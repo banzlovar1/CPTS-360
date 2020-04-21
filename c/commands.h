@@ -62,7 +62,7 @@ int write_file();
 int mywrite(int fd, char *buf, int nbytes);
 
 // mount_umount.c
-int mount();
+int mount(char *filesys, char *mount_point);
 int umount(char *filesys);
 
 #endif

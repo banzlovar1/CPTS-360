@@ -36,7 +36,7 @@ typedef struct minode{
     int refCount;
     int dirty;
     int mounted;
-    struct mntable *mptr;
+    struct mntable *mntptr;
 }MINODE;
 
 typedef struct oft{
