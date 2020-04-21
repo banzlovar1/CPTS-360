@@ -12,11 +12,11 @@ int cp_file(char *src, char *dest)
     if(gd < 0)
     {
         printf("Creating File\n");
-        int ino = creat_file(dest);
+        creat_file(dest);
         gd = open_file(dest, "1");;
     }
     //Need read to complete
-    while(n = myread(fd, buf, BLKSIZE, 0))
+    while((n = myread(fd, buf, BLKSIZE, 0)))
     {
         mywrite(gd, buf, n);
     }
