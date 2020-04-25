@@ -23,7 +23,10 @@ int mount(char *filesys, char *mount_point){
     // do not want to mount an existing mounted system, also gets next open mnt entry
     for (i=0; i<NMNT; i++){
         mntptr = &mtable[i];
-        if (mntptr == 0);
+        if (mntptr->dev==0){
+            printf("[mount]: found open mnt entry @ mtable[%d]\n", i);
+            break;
+        }
         if (strcmp(mntptr->name, filesys)==0) return -1;
     }
 
