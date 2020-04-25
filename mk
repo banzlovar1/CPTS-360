@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm proj testdisk1
-cp testdisk testdisk1
-gcc c/main.c -o proj 
-./proj
+rm proj mydisk
+./mkdisk
+gcc main.c -o proj 
+./proj $1
