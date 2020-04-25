@@ -25,7 +25,7 @@ int write_file()
 int mywrite(int fd, char buf[], int nbytes)
 {
     printf("[mywrite]: %d %d\n", (int)strlen(buf), nbytes);
-    int count = nbytes, blk, dblk, *u;
+    int count = nbytes, blk, dblk;
     int ibuf[256], dbuf[256], buf13[256];
     char wbuf[BLKSIZE];
     OFT *oftp;
@@ -60,7 +60,8 @@ int mywrite(int fd, char buf[], int nbytes)
                 // Get block into memmory
                 get_block(mip->dev, mip->inode.i_block[12], (char *)ibuf);
                 // Zero it out
-                memset(ibuf, 0, 256);
+                bzero(ibuf, 256);
+                //memset(ibuf, 0, 256);
                 // Put block into memory
                 put_block(mip->dev,mip->inode.i_block[12], (char *)ibuf);
             }
