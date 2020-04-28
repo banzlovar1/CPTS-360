@@ -20,7 +20,8 @@ int cd(char *pathname)
     }
 
     printf("\n[cd]: cwd = ");
-    pwd(running->cwd);
+    rpwd(running->cwd);
+    putchar('\n');
 
     return 0;
 }
@@ -125,19 +126,44 @@ int ls(char *pathname)
 }
 
 char *rpwd(MINODE *wd){
-    printf("1\n");
-    MINODE *pip;
-    int p_ino=0;
+    MINODE *pip, *mip, *newmip;
+    int p_ino=0, i;
     u32 *ino=malloc(8);
     char my_name[256];
+    MNTENTRY *mntptr;
 
     if (wd == root) return 0;
-    printf("2\n");
 
     p_ino = findino(wd, ino);
     pip = iget(dev, p_ino);
 
     findmyname(pip, *ino, my_name);
+
+    // check if wd->dev is a open mntentry dev
+    for (i=0; i<NMNT; i++)
+        if ((mntptr=&mtable[i])->dev == wd->dev)
+            break;
+
+    if (mntptr->dev > 0){
+        newmip = mntptr->mptr;
+        iput(pip);
+        u32 ino;
+        int pino = findino(newmip, &ino);
+        pip = iget(newmip->dev, pino);
+    }
+    //if (wd->dev != root->dev && wd->ino == 2){
+    //    printf("[pwd]: crossing up from mount point\n");
+    //    
+    //    for (i=0; i<NMNT; i++)
+    //        if ((mntptr=&mtable[i])->dev == wd->dev)
+    //            break;
+
+    //    newmip = wd;
+    //    iput(wd);
+    //    wd = mntptr->mptr;
+    //    dev = wd->dev;
+    //    printf("[pwd]: new dev=%d\n", dev);
+    //}
 
     rpwd(pip);
     printf("/%s", my_name);
@@ -149,13 +175,11 @@ char *rpwd(MINODE *wd){
 
 char *pwd(MINODE *wd){
     if (wd == root){
-        printf("/\n");
+        printf("[pwd]: /\n");
         return 0;
     }
-    putchar('\n');
-    putchar(' ');
+    printf("[pwd]: ");
     rpwd(wd);
-    putchar('\n');
     putchar('\n');
 
     return 0;
