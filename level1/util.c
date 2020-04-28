@@ -157,7 +157,8 @@ int getino(char *pathname){
     int i, ino;// blk, disp;
     //char buf[BLKSIZE];
     //INODE *ip;
-    MINODE *mip, *mntmip, *newmip;
+    MINODE *mip, *newmip;
+    MNTENTRY *mntptr;
 
     printf("[getino]: pathname=%s\n", pathname);
     if (strcmp(pathname, "/")==0)
@@ -176,14 +177,29 @@ int getino(char *pathname){
         printf("[getino]: ===========================================\n");
         printf("[getino]: i=%d name[%d]=%s ", i, i, name[i]);
 
+        printf("mip->dev=%d, mip->ino=%d\n", mip->dev, mip->ino);
         printf("mounted=%d\n", mip->mounted);
 
-        if (strncmp(name[i], "..", 2) && mip->dev != root->dev && mip->ino == 2){
+        if (strncmp(name[i], "..", 2)==0 && mip->dev != root->dev && mip->ino == 2){
             printf("[getino]: crossing up from mount point\n");
-            //mntmip = mtable[0].mptr; // change later
-            //iput(mip);
-            //mip = mntmip;
-            //dev = mip->dev;
+            
+            // get mount point mip
+            for (i=0; i<NMNT; i++)
+                if ((mntptr=&mtable[i])->dev == mip->dev)
+                    break;
+
+            newmip = mntptr->mptr;
+            iput(mip);
+
+            // get parent of mount pount mip and update dev
+            u32 ino; 
+            int pino = findino(newmip, &ino);
+            printf("[getino]: ino=%d pino=%d\n", (int)ino, pino);
+            mip = iget(newmip->dev, pino);
+            dev = newmip->dev;
+            printf("[getino]: new dev=%d\n", dev);
+
+            continue;
         }
 
         ino = search(mip, name[i]);
@@ -196,6 +212,7 @@ int getino(char *pathname){
             MNTENTRY *mntptr = mip->mntptr;
             iput(mip);
             dev = mntptr->dev;
+            printf("[getino]: new dev=%d\n", dev);
             mip = iget(dev, 2);
         } else if (ino==0){
             iput(mip);
@@ -205,7 +222,7 @@ int getino(char *pathname){
     }
 
     iput(mip);                   // release mip  
-    return ino;
+    return mip->ino;
 }
     
 int findmyname(MINODE *parent, u32 myino, char *myname){
