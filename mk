@@ -7,12 +7,13 @@ then
 fi
 
 cp $1 "$1_cpy"
-echo "[mk]: copied $1 to $1_cpy"
+echo "[mk]: Copied $1 to $1_cpy"
 
-gcc main.c -o proj 
+echo "[mk]: Compiling project..."
+gcc -g main.c -o project
 
-echo "[mk]: executing compiled proj with disk=$1_cpy"
-./proj "$1_cpy"
+echo "[mk]: Executing compiled project with $1_cpy"
+./project "$1_cpy"
 
-echo "[mk]: removing $1_cpy and proj"
-rm "$1_cpy" proj
+echo "[mk]: Removing $1_cpy and project"
+rm "$1_cpy" project
