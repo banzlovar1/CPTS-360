@@ -9,10 +9,16 @@ int unlink_file(char *filename)
     int ino = getino(filename);
     if(ino < 1)
     {
-        printf("File does not exist\n");
+        printf("[unlink]: File does not exist\n");
         return 0;
     }
     MINODE *mip = iget(dev,ino);
+    // Check to see if ownership stands or is super user
+    if(running->uid != mip->inode.i_uid || running->uid != 0)
+    {
+        printf("[unlink]: Permission Denied\n");
+        return 0;
+    }
     if(S_ISREG(mip->inode.i_mode) || S_ISLNK(mip->inode.i_mode))
     {
         char *parent = dirname(filename);

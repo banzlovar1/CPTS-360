@@ -174,6 +174,12 @@ int getino(char *pathname){
 
     tokenize(pathname);
     for (i=0; i<n; i++){
+        if(!maccess(mip, 'x'))
+        {
+            printf("[getino]: Access denied\n");
+            iput(mip);
+            return 0;
+        }
         printf("[getino]: ===========================================\n");
         printf("[getino]: i=%d name[%d]=%s ", i, i, name[i]);
 
@@ -481,6 +487,84 @@ int pfd(){
             break; // no more open fds
     }
     putchar('\n');
+
+    return 0;
+}
+
+int faccess(char *pathname, char mode)
+{
+    char t1[9] = "xwrxwrxwr", t2[9] = "---------";
+    char permi[9];
+    int offset = 0;
+    int ino = getino(pathname);
+    MINODE *mip = iget(dev,ino);
+    INODE *ip = &mip->inode;
+
+    for (int i=8; i >= 0; i--) // permissions
+        if (ip->i_mode & (1 << i))
+            permi[i]=t1[i];
+        else
+            permi[i]='-';
+    
+    //printf("\npermission %s\n", permi);
+    if(mode == 'w')
+        offset = 1;
+    if(mode == 'x')
+        offset = 2;
+
+    // Super User
+    if(running->uid ==0)
+        return 1;
+
+    // Owner
+    if(ip->i_uid == running->uid)
+        if(mode == permi[offset])
+            return 1;
+    // Same group
+    else if(ip->i_gid == running->gid)
+        if(mode == permi[offset + 3])
+            return 1;
+    // Other
+    else
+        if(mode == permi[offset + 6])
+            return 1;
+
+    return 0;
+}
+
+int maccess(MINODE *mip, char mode)
+{
+    char t1[9] = "xwrxwrxwr", t2[9] = "---------";
+    char permi[9];
+    int offset = 0;
+    INODE *ip = &mip->inode;
+
+    for (int i=8; i >= 0; i--) // permissions
+        if (ip->i_mode & (1 << i))
+            permi[i]=t1[i];
+        else
+            permi[i]='-';
+    
+    //printf("\npermission %s\n", permi);
+    if(mode == 'w')
+        offset = 1;
+    if(mode == 'x')
+        offset = 2;
+
+     // Super User
+    if(running->uid ==0)
+        return 1;    
+
+    // Owner
+    if(ip->i_uid == running->uid)
+        if(mode == permi[offset])
+            return 1;
+    else if(ip->i_gid == running->gid)
+        if(mode == permi[offset + 3])
+            return 1;
+    else
+        if(mode == permi[offset + 6])
+            return 1;
 
     return 0;
 }

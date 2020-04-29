@@ -21,6 +21,13 @@ int make_dir(char *pathname){
     pino = getino(path);
     pmip = iget(dev, pino);
 
+    if(!maccess(pmip, 'w'))
+    {
+         printf("[mkdir]: Access denied\n");
+        iput(pmip);
+        return 0;
+    }
+
     if ((pmip->inode.i_mode & 0xF000) == 0x4000){ // is_dir
         printf("[mkdir]: pmip is a dir\n");
         if (search(pmip, name)==0){ // if can't find child name in start MINODE
@@ -177,7 +184,13 @@ int creat_file(char *pathname){
 
     pino = getino(path);
     pmip = iget(dev, pino);
-
+    
+    if(!maccess(pmip, 'w'))
+    {
+         printf("[mkdir]: Access denied\n");
+        iput(pmip);
+        return 0;
+    }
     if ((pmip->inode.i_mode & 0xF000) == 0x4000){ // is_dir
         if (search(pmip, name)==0){ // if can't find child name in start MINODE
             r = mycreat(pmip, name);

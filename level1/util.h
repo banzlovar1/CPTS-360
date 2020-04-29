@@ -38,4 +38,7 @@ int bdalloc(int dev, int blk);
 
 int pfd();
 
+int faccess(char *pathname, char mode);
+int maccess(MINODE *mip, char mode);
+
 #endif
