@@ -10,6 +10,11 @@ int rm_dir(char *pathname){
     strcpy(temp, pathname);
 
     ino = getino(pathname);
+    if(ino == -1)
+    {
+        printf("[rmdir]: Access Denied\n");
+        return 0;
+    }
     mip = iget(dev, ino);
 
     findmyname(mip, ino, name);
