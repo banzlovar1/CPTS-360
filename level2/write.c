@@ -14,11 +14,8 @@ int write_file()
     if(running->fd[fd] == NULL)
         return -1;
     if(running->fd[fd]->mode == 1 || running->fd[fd]->mode == 2)
-    {
-        getchar();
         return(mywrite(fd, string, strlen(string)));
-    }
-    printf("[write_file]: Can write to a file designated for read\n");
+    printf("[write_file]: Can't write to a file designated for read\n");
     return -1;
 }
 

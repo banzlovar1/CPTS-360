@@ -20,7 +20,7 @@ int rm_dir(char *pathname){
     printf("[rm_dir]: running->uid=%d ", running->uid);
     printf("[rm_dir]: ino->i_uid=%d\n", mip->inode.i_uid);
 
-    if (running->uid != mip->inode.i_uid) return 0; // How to check if running PROC is superuser?
+    if (running->uid != mip->inode.i_uid || running->uid != 0) return 0; // How to check if running PROC is User
     printf("[rm_dir]: running->uid == ino->i_uid\n");
 
     if ((mip->inode.i_mode & 0xF000) == 0x4000 && mip->refCount <= 1){ // if is a dir and not being used

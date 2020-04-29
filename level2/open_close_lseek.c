@@ -15,6 +15,22 @@ int open_file(char *pathname, char *mode){
     ino = getino(pathname);
     mip = iget(dev, ino); // get the ino and mip of pathname
 
+    if(i_mode == 0)
+        if (!maccess(mip, 'r'))
+        { // char = 'r' for R; 'w' for W, RW, APPEND
+            iput(mip); 
+            return -1;
+        }
+    else
+    {
+        if (!maccess(mip, 'w'))
+        { // char = 'r' for R; 'w' for W, RW, APPEND
+            iput(mip); 
+            return -1;
+        }
+    }
+    
+
     if ((mip->inode.i_mode & 0xF000) != 0x8000) // check if regular file
         return -1;
 
@@ -47,7 +63,7 @@ int open_file(char *pathname, char *mode){
         case 2: // Read/Write: Don't truncate, offset = 0
             open->offset = 0;
             break;
-        case 4: // Append: offset to size of file
+        case 3: // Append: offset to size of file
             open->offset = mip->inode.i_size;
             break;
         default:
