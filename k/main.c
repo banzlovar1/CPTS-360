@@ -123,14 +123,16 @@ int main(int argc, char *argv[ ])
 
     printf("creating P0 as running process\n");
     running = &proc[0];
+    proc[0].uid = 0;
     running->status = READY;
     running->cwd = iget(dev, 2);
     printf("root refCount = %d\n", root->refCount);
 
     // WRTIE code here to create P1 as a USER process
-  
+    proc[1].uid = 1;
+    proc[1].status = FREE;
     while(1){
-        printf("running p%d: [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|lseek|pfd|write|close|cat|cp|mv|mount|umount|quit] ", running->uid);
+        printf("running p%d: [ls|cd|pwd|mkdir|rmdir|touch|symlink|link|unlink|open|read|lseek|pfd|write|close|cat|cp|mv|mount|umount|sw|quit] ", running->uid);
         fgets(line, 128, stdin);
         line[strlen(line)-1] = 0;
 
@@ -185,6 +187,27 @@ int main(int argc, char *argv[ ])
             mount(src, dest);
         else if (strcmp(cmd, "umount")==0)
             umount(src);
+         else if (strcmp(cmd, "sw")==0)
+         {
+             if(running->uid == 0)
+             {
+                printf("[sw]: switch from p1 to p0\n");
+                running = &proc[1];
+                running->status = READY;
+                running->cwd = iget(dev, 2);
+                proc[0].status = FREE;
+             }
+             else
+             {
+                printf("[sw]: switch from p0 to p1\n");
+                running = &proc[0];
+                running->status = READY;
+                running->cwd = iget(dev, 2);
+                proc[1].status = FREE;
+             }
+             
+
+         }
         else if (strcmp(cmd, "quit")==0 || strcmp(cmd, "q")==0)
             quit();
     }
