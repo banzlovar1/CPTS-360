@@ -20,6 +20,11 @@ int mount(char *filesys, char *mount_point){
         return 0;
     }
 
+    if(running->uid != 0)
+    {
+        printf("[mount]: Permission denied, must be super user\n");
+        return -1;
+    }
     // do not want to mount an existing mounted system, also gets next open mnt entry
     for (i=0; i<NMNT; i++){
         mntptr = &mtable[i];
@@ -77,6 +82,13 @@ int umount(char *filesys){
     int i, fd, ino, mdev;
     MINODE *mip = running->cwd;
     MNTENTRY *mntptr;
+
+    if(running->uid != 0)
+    {
+        printf("[umount]: Permission denied, must be super user\n");
+        return -1;
+    }
+
     printf("[umount]: filesys=%s\n", filesys);
     // Check mount table to see if it has is mounted
     for (i=0; i<NMNT; i++){
