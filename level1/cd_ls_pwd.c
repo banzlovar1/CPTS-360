@@ -20,7 +20,9 @@ int cd(char *pathname)
     }
 
     printf("\n[cd]: cwd = ");
+    int cur_dev = dev;
     rpwd(running->cwd);
+    dev = cur_dev;
     putchar('\n');
 
     return 0;
@@ -126,44 +128,31 @@ int ls(char *pathname)
 }
 
 char *rpwd(MINODE *wd){
-    MINODE *pip, *mip, *newmip;
+    MINODE *pip, *newmip;
     int p_ino=0, i;
-    u32 *ino=malloc(8);
+    u32 ino;
     char my_name[256];
     MNTENTRY *mntptr;
 
+    // if at root of other dev, must hop to root dev mount point
+    if (wd->dev != root->dev && wd->ino == 2){
+        for (i=0; i<NMNT; i++)
+            if ((mntptr=&mtable[i])->dev == wd->dev)
+                break;
+
+        newmip = mntptr->mptr;
+        iput(wd);
+        p_ino = findino(newmip, &ino);
+        wd = iget(newmip->dev, ino);
+        pip = iget(newmip->dev, p_ino);
+        dev = newmip->dev;
+    }
     if (wd == root) return 0;
 
-    p_ino = findino(wd, ino);
+    p_ino = findino(wd, &ino);
     pip = iget(dev, p_ino);
 
-    findmyname(pip, *ino, my_name);
-
-    // check if wd->dev is a open mntentry dev
-    for (i=0; i<NMNT; i++)
-        if ((mntptr=&mtable[i])->dev == wd->dev)
-            break;
-
-    if (mntptr->dev > 0){
-        newmip = mntptr->mptr;
-        iput(pip);
-        u32 ino;
-        int pino = findino(newmip, &ino);
-        pip = iget(newmip->dev, pino);
-    }
-    //if (wd->dev != root->dev && wd->ino == 2){
-    //    printf("[pwd]: crossing up from mount point\n");
-    //    
-    //    for (i=0; i<NMNT; i++)
-    //        if ((mntptr=&mtable[i])->dev == wd->dev)
-    //            break;
-
-    //    newmip = wd;
-    //    iput(wd);
-    //    wd = mntptr->mptr;
-    //    dev = wd->dev;
-    //    printf("[pwd]: new dev=%d\n", dev);
-    //}
+    findmyname(pip, ino, my_name);
 
     rpwd(pip);
     printf("/%s", my_name);
@@ -174,6 +163,8 @@ char *rpwd(MINODE *wd){
 }
 
 char *pwd(MINODE *wd){
+    int cur_dev = dev;
+
     if (wd == root){
         printf("[pwd]: /\n");
         return 0;
@@ -181,6 +172,9 @@ char *pwd(MINODE *wd){
     printf("[pwd]: ");
     rpwd(wd);
     putchar('\n');
+
+    // make sure dev is not changed
+    dev = cur_dev;
 
     return 0;
 }

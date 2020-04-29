@@ -7,17 +7,17 @@ int unlink_file(char *filename)
     char cpy[128];
     strcpy(cpy, filename);
     int ino = getino(filename);
-    if(ino < 1)
+    if(ino <= 0)
     {
         printf("[unlink]: File does not exist\n");
-        return 0;
+        return -1;
     }
     MINODE *mip = iget(dev,ino);
     // Check to see if ownership stands or is super user
     if(running->uid != mip->inode.i_uid || running->uid != 0)
     {
         printf("[unlink]: Permission Denied\n");
-        return 0;
+        return -1;
     }
     if(S_ISREG(mip->inode.i_mode) || S_ISLNK(mip->inode.i_mode))
     {

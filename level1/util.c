@@ -559,9 +559,11 @@ int maccess(MINODE *mip, char mode)
     if(ip->i_uid == running->uid)
         if(mode == permi[offset])
             return 1;
+    // Group
     else if(ip->i_gid == running->gid)
         if(mode == permi[offset + 3])
             return 1;
+    // Other
     else
         if(mode == permi[offset + 6])
             return 1;

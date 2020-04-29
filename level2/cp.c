@@ -24,5 +24,4 @@ int cp_file(char *src, char *dest)
     close_file(gd);
     
     return 0;
-
 }

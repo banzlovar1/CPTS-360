@@ -63,7 +63,7 @@ int open_file(char *pathname, char *mode){
         case 2: // Read/Write: Don't truncate, offset = 0
             open->offset = 0;
             break;
-        case 4: // Append: offset to size of file
+        case 3: // Append: offset to size of file
             open->offset = mip->inode.i_size;
             break;
         default:
