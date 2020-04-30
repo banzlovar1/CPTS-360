@@ -178,7 +178,7 @@ int getino(char *pathname){
         {
             printf("[getino]: Access denied\n");
             iput(mip);
-            return 0;
+            return -1;
         }
         printf("[getino]: ===========================================\n");
         printf("[getino]: i=%d name[%d]=%s ", i, i, name[i]);
